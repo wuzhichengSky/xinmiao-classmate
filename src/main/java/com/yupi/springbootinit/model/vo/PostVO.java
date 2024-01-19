@@ -25,7 +25,7 @@ public class PostVO implements Serializable {
     /**
      * 标题
      */
-    private String title;
+    //private String title;
 
     /**
      * 内容

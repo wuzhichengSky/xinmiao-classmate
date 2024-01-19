@@ -89,7 +89,7 @@ public class PostEsDTO implements Serializable {
      * @param post
      * @return
      */
-    public static PostEsDTO objToDto(Post post) {
+    /*public static PostEsDTO objToDto(Post post) {
         if (post == null) {
             return null;
         }
@@ -100,7 +100,7 @@ public class PostEsDTO implements Serializable {
             postEsDTO.setTags(JSONUtil.toList(tagsStr, String.class));
         }
         return postEsDTO;
-    }
+    }*/
 
     /**
      * 包装类转对象
@@ -108,7 +108,7 @@ public class PostEsDTO implements Serializable {
      * @param postEsDTO
      * @return
      */
-    public static Post dtoToObj(PostEsDTO postEsDTO) {
+    /*public static Post dtoToObj(PostEsDTO postEsDTO) {
         if (postEsDTO == null) {
             return null;
         }
@@ -119,5 +119,5 @@ public class PostEsDTO implements Serializable {
             post.setTags(JSONUtil.toJsonStr(tagList));
         }
         return post;
-    }
+    }*/
 }

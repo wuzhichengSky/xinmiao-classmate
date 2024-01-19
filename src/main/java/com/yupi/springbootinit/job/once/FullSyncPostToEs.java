@@ -30,7 +30,7 @@ public class FullSyncPostToEs implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        List<Post> postList = postService.list();
+        /*List<Post> postList = postService.list();
         if (CollUtil.isEmpty(postList)) {
             return;
         }
@@ -43,6 +43,6 @@ public class FullSyncPostToEs implements CommandLineRunner {
             log.info("sync from {} to {}", i, end);
             postEsDao.saveAll(postEsDTOList.subList(i, end));
         }
-        log.info("FullSyncPostToEs end, total {}", total);
+        log.info("FullSyncPostToEs end, total {}", total);*/
     }
 }

@@ -28,4 +28,5 @@ public class JsonConfig {
         objectMapper.registerModule(module);
         return objectMapper;
     }
+
 }

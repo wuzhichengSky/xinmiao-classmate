@@ -17,21 +17,6 @@ import lombok.EqualsAndHashCode;
 public class PostQueryRequest extends PageRequest implements Serializable {
 
     /**
-     * id
-     */
-    private Long id;
-
-    /**
-     * id
-     */
-    private Long notId;
-
-    /**
-     * 搜索词
-     */
-    private String searchText;
-
-    /**
      * 标题
      */
     private String title;
@@ -50,6 +35,22 @@ public class PostQueryRequest extends PageRequest implements Serializable {
      * 至少有一个标签
      */
     private List<String> orTags;
+
+    /**
+     * 搜索词
+     */
+    private String searchText;
+
+
+    /**
+     * 帖子id
+     */
+    private Long id;
+
+    /**
+     * id
+     */
+    private Long notId;
 
     /**
      * 创建用户 id

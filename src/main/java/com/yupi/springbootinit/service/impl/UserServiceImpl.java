@@ -111,7 +111,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public LoginUserVO userLoginByMpOpen(WxOAuth2UserInfo wxOAuth2UserInfo, HttpServletRequest request) {
-        String unionId = wxOAuth2UserInfo.getUnionId();
+        /*String unionId = wxOAuth2UserInfo.getUnionId();
         String mpOpenId = wxOAuth2UserInfo.getOpenid();
         // 单机锁
         synchronized (unionId.intern()) {
@@ -138,7 +138,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             // 记录用户的登录态
             request.getSession().setAttribute(USER_LOGIN_STATE, user);
             return getLoginUserVO(user);
-        }
+        }*/
+        return null;
     }
 
     /**
@@ -199,7 +200,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public boolean isAdmin(User user) {
-        return user != null && UserRoleEnum.ADMIN.getValue().equals(user.getUserRole());
+        //return user != null && UserRoleEnum.ADMIN.getValue().equals(user.getUserRole());
+        return false;
     }
 
     /**

@@ -55,6 +55,8 @@ public class PostFavourServiceImpl extends ServiceImpl<PostFavourMapper, PostFav
         }
     }
 
+
+
     @Override
     public Page<Post> listFavourPostByPage(IPage<Post> page, Wrapper<Post> queryWrapper, long favourUserId) {
         if (favourUserId <= 0) {

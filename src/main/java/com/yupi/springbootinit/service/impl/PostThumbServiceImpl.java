@@ -52,6 +52,8 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
         }
     }
 
+
+
     /**
      * 封装了事务的方法
      *

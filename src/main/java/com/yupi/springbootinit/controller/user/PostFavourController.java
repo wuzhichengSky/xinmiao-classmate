@@ -1,4 +1,4 @@
-package com.yupi.springbootinit.controller.student;
+package com.yupi.springbootinit.controller.user;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yupi.springbootinit.common.BaseResponse;
@@ -18,10 +18,7 @@ import com.yupi.springbootinit.service.UserService;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 帖子收藏接口
@@ -50,7 +47,7 @@ public class PostFavourController {
      * @param request
      * @return resultNum 收藏变化数
      */
-    @PostMapping("/")
+    @PostMapping
     public BaseResponse<Integer> doPostFavour(@RequestBody PostFavourAddRequest postFavourAddRequest,
             HttpServletRequest request) {
         if (postFavourAddRequest == null || postFavourAddRequest.getPostId() <= 0) {
@@ -69,7 +66,7 @@ public class PostFavourController {
      * @param postQueryRequest
      * @param request
      */
-    @PostMapping("/my/list/page")
+    /*@PostMapping("/my/list/page")
     public BaseResponse<Page<PostVO>> listMyFavourPostByPage(@RequestBody PostQueryRequest postQueryRequest,
             HttpServletRequest request) {
         if (postQueryRequest == null) {
@@ -83,7 +80,7 @@ public class PostFavourController {
         Page<Post> postPage = postFavourService.listFavourPostByPage(new Page<>(current, size),
                 postService.getQueryWrapper(postQueryRequest), loginUser.getId());
         return ResultUtils.success(postService.getPostVOPage(postPage, request));
-    }
+    }*/
 
     /**
      * 获取用户收藏的帖子列表
@@ -91,7 +88,7 @@ public class PostFavourController {
      * @param postFavourQueryRequest
      * @param request
      */
-    @PostMapping("/list/page")
+    @GetMapping("/list/page")
     public BaseResponse<Page<PostVO>> listFavourPostByPage(@RequestBody PostFavourQueryRequest postFavourQueryRequest,
             HttpServletRequest request) {
         if (postFavourQueryRequest == null) {

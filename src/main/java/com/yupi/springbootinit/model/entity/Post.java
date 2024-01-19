@@ -7,6 +7,9 @@ import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
+
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
 
 /**
@@ -15,7 +18,7 @@ import lombok.Data;
  * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
  * @from <a href="https://yupi.icu">编程导航知识星球</a>
  */
-@TableName(value = "post")
+@TableName(value = "post",autoResultMap = true)
 @Data
 public class Post implements Serializable {
 
@@ -36,8 +39,9 @@ public class Post implements Serializable {
     private String content;
 
     /**
-     * 标签列表 json
+     * 标签列表
      */
+    @TableField(typeHandler = JacksonTypeHandler.class)
     private String tags;
 
     /**

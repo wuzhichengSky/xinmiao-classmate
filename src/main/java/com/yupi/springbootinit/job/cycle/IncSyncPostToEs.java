@@ -35,7 +35,7 @@ public class IncSyncPostToEs {
     @Scheduled(fixedRate = 60 * 1000)
     public void run() {
         // 查询近 5 分钟内的数据
-        Date fiveMinutesAgoDate = new Date(new Date().getTime() - 5 * 60 * 1000L);
+        /*Date fiveMinutesAgoDate = new Date(new Date().getTime() - 5 * 60 * 1000L);
         List<Post> postList = postMapper.listPostWithDelete(fiveMinutesAgoDate);
         if (CollUtil.isEmpty(postList)) {
             log.info("no inc post");
@@ -52,6 +52,6 @@ public class IncSyncPostToEs {
             log.info("sync from {} to {}", i, end);
             postEsDao.saveAll(postEsDTOList.subList(i, end));
         }
-        log.info("IncSyncPostToEs end, total {}", total);
+        log.info("IncSyncPostToEs end, total {}", total);*/
     }
 }

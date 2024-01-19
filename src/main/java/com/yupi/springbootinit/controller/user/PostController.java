@@ -1,4 +1,4 @@
-package com.yupi.springbootinit.controller.student;
+package com.yupi.springbootinit.controller.user;
 
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -24,11 +24,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 帖子接口
@@ -56,7 +52,7 @@ public class PostController {
      * @param request
      * @return
      */
-    @PostMapping("/add")
+    @PostMapping
     public BaseResponse<Long> addPost(@RequestBody PostAddRequest postAddRequest, HttpServletRequest request) {
         if (postAddRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -68,14 +64,18 @@ public class PostController {
             post.setTags(JSONUtil.toJsonStr(tags));
         }
         postService.validPost(post, true);
-        User loginUser = userService.getLoginUser(request);
-        post.setUserId(loginUser.getId());
+        //TODO 登录逻辑
+        //User loginUser = userService.getLoginUser(request);
+        //post.setUserId(loginUser.getId());
         post.setFavourNum(0);
         post.setThumbNum(0);
+
+        post.setUserId(1L);
+
         boolean result = postService.save(post);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         long newPostId = post.getId();
-        return ResultUtils.success(newPostId);
+        return ResultUtils.success(newPostId,"发布成功");
     }
 
     /**
@@ -85,22 +85,23 @@ public class PostController {
      * @param request
      * @return
      */
-    @PostMapping("/delete")
+    @DeleteMapping
     public BaseResponse<Boolean> deletePost(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        User user = userService.getLoginUser(request);
+        //TODO 登录逻辑
+        //User user = userService.getLoginUser(request);
         long id = deleteRequest.getId();
         // 判断是否存在
         Post oldPost = postService.getById(id);
         ThrowUtils.throwIf(oldPost == null, ErrorCode.NOT_FOUND_ERROR);
         // 仅本人或管理员可删除
-        if (!oldPost.getUserId().equals(user.getId()) && !userService.isAdmin(request)) {
+        /*if (!oldPost.getUserId().equals(user.getId()) && !userService.isAdmin(request)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-        }
+        }*/
         boolean b = postService.removeById(id);
-        return ResultUtils.success(b);
+        return ResultUtils.success(b,"删除成功");
     }
 
     /**
@@ -109,7 +110,7 @@ public class PostController {
      * @param postUpdateRequest
      * @return
      */
-    @PostMapping("/update")
+    /*@PostMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> updatePost(@RequestBody PostUpdateRequest postUpdateRequest) {
         if (postUpdateRequest == null || postUpdateRequest.getId() <= 0) {
@@ -129,7 +130,7 @@ public class PostController {
         ThrowUtils.throwIf(oldPost == null, ErrorCode.NOT_FOUND_ERROR);
         boolean result = postService.updateById(post);
         return ResultUtils.success(result);
-    }
+    }*/
 
     /**
      * 根据 id 获取
@@ -156,7 +157,7 @@ public class PostController {
      * @return
      */
     @PostMapping("/list/page")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    //@AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<Post>> listPostByPage(@RequestBody PostQueryRequest postQueryRequest) {
         long current = postQueryRequest.getCurrent();
         long size = postQueryRequest.getPageSize();
@@ -172,7 +173,7 @@ public class PostController {
      * @param request
      * @return
      */
-    @PostMapping("/list/page/vo")
+    @GetMapping("/list/page")
     public BaseResponse<Page<PostVO>> listPostVOByPage(@RequestBody PostQueryRequest postQueryRequest,
             HttpServletRequest request) {
         long current = postQueryRequest.getCurrent();
@@ -234,7 +235,7 @@ public class PostController {
      * @param request
      * @return
      */
-    @PostMapping("/edit")
+    /*@PostMapping("/edit")
     public BaseResponse<Boolean> editPost(@RequestBody PostEditRequest postEditRequest, HttpServletRequest request) {
         if (postEditRequest == null || postEditRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -258,6 +259,6 @@ public class PostController {
         }
         boolean result = postService.updateById(post);
         return ResultUtils.success(result);
-    }
+    }*/
 
 }
