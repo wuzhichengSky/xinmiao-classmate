@@ -34,9 +34,25 @@ public class LoginUserVO implements Serializable {
     private String userProfile;
 
     /**
-     * 用户角色：user/admin/ban
+     * 学号
      */
-    private String userRole;
+    private String userAccount;
+
+
+    /**
+     * 学院
+     */
+    private String academy;
+
+    /**
+     * 班级
+     */
+    private String classes;
+
+    /**
+     * 积分
+     */
+    private Integer points;
 
     /**
      * 创建时间

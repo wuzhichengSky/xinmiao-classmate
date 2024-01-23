@@ -8,6 +8,9 @@ package com.yupi.springbootinit.constant;
  */
 public interface CommonConstant {
 
+    //图片大小为1MB
+    Long maxAvatarSize = 1024*1024L;
+
     /**
      * 升序
      */

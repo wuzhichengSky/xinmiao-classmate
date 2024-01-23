@@ -9,6 +9,7 @@ import com.yupi.springbootinit.model.vo.UserVO;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 用户服务
@@ -118,4 +119,7 @@ public interface UserService extends IService<User> {
      */
     QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
 
+    Boolean updatePassword(String oldPassword, String newPassword1, String newPassword2, HttpServletRequest request);
+
+    Boolean userIdentify(MultipartFile iDcard, MultipartFile letter, MultipartFile avatar, HttpServletRequest request);
 }

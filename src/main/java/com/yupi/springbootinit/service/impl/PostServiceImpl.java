@@ -295,6 +295,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             List<PostFavour> postFavourList = postFavourMapper.selectList(postFavourQueryWrapper);
             postFavourList.forEach(postFavour -> postIdHasFavourMap.put(postFavour.getPostId(), true));
         }
+
         // 填充信息
         List<PostVO> postVOList = postList.stream().map(post -> {
             PostVO postVO = PostVO.objToVo(post);

@@ -7,25 +7,23 @@ import com.yupi.springbootinit.common.DeleteRequest;
 import com.yupi.springbootinit.common.ErrorCode;
 import com.yupi.springbootinit.common.ResultUtils;
 import com.yupi.springbootinit.config.WxOpenConfig;
+import com.yupi.springbootinit.constant.CommonConstant;
 import com.yupi.springbootinit.constant.UserConstant;
 import com.yupi.springbootinit.exception.BusinessException;
 import com.yupi.springbootinit.exception.ThrowUtils;
-import com.yupi.springbootinit.model.dto.user.UserAddRequest;
-import com.yupi.springbootinit.model.dto.user.UserLoginRequest;
-import com.yupi.springbootinit.model.dto.user.UserQueryRequest;
-import com.yupi.springbootinit.model.dto.user.UserRegisterRequest;
-import com.yupi.springbootinit.model.dto.user.UserUpdateMyRequest;
-import com.yupi.springbootinit.model.dto.user.UserUpdateRequest;
+import com.yupi.springbootinit.model.dto.user.*;
 import com.yupi.springbootinit.model.entity.User;
 import com.yupi.springbootinit.model.vo.LoginUserVO;
 import com.yupi.springbootinit.model.vo.UserVO;
 import com.yupi.springbootinit.service.UserService;
 
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.yupi.springbootinit.utils.QCloudCosService;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
 import me.chanjar.weixin.common.bean.oauth2.WxOAuth2AccessToken;
@@ -33,20 +31,17 @@ import me.chanjar.weixin.mp.api.WxMpService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.DigestUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.yaml.snakeyaml.events.Event;
 
+import static com.yupi.springbootinit.constant.UserConstant.USER_LOGIN_STATE;
 import static com.yupi.springbootinit.service.impl.UserServiceImpl.SALT;
 
 /**
- * 用户接口
- *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
+ * @author wzc
+ * 2024/1/23
  */
 @RestController
 @RequestMapping("/user")
@@ -58,6 +53,9 @@ public class UserController {
 
     @Resource
     private WxOpenConfig wxOpenConfig;
+
+    @Resource
+    private QCloudCosService qCloudCosService;
 
     // region 登录相关
 
@@ -100,7 +98,7 @@ public class UserController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         LoginUserVO loginUserVO = userService.userLogin(userAccount, userPassword, request);
-        return ResultUtils.success(loginUserVO);
+        return ResultUtils.success(loginUserVO,"登录成功");
     }
 
     /**
@@ -127,6 +125,22 @@ public class UserController {
     }
 
     /**
+     * 用户认证
+     *
+     * @return
+     */
+    @PostMapping("/identify")
+    public BaseResponse<Boolean> userIdentify(MultipartFile IDcard,MultipartFile letter, MultipartFile avatar,  HttpServletRequest request) {
+        if(IDcard==null || letter==null || avatar==null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        Boolean result = userService.userIdentify(IDcard,letter,avatar, request);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        return ResultUtils.success(true,"认证成功");
+    }
+
+
+    /**
      * 用户注销
      *
      * @param request
@@ -147,7 +161,7 @@ public class UserController {
      * @param request
      * @return
      */
-    @GetMapping("/get/login")
+    @GetMapping("/info")
     public BaseResponse<LoginUserVO> getLoginUser(HttpServletRequest request) {
         User user = userService.getLoginUser(request);
         return ResultUtils.success(userService.getLoginUserVO(user));
@@ -199,24 +213,58 @@ public class UserController {
     }
 
     /**
-     * 更新用户
+     * 修改简单信息
      *
-     * @param userUpdateRequest
      * @param request
      * @return
      */
-    @PostMapping("/update")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> updateUser(@RequestBody UserUpdateRequest userUpdateRequest,
+    @PutMapping("/info")
+    public BaseResponse<Boolean> updateUser(String userName,MultipartFile userAvatar,String userProfile,
             HttpServletRequest request) {
-        if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        User user = (User) userObj;
+
+        if(!StringUtils.isBlank(userName)){
+            user.setUserName(userName);
         }
-        User user = new User();
-        BeanUtils.copyProperties(userUpdateRequest, user);
+        if(StringUtils.isNotBlank(userProfile)){
+            user.setUserProfile(userProfile);
+        }
+
+        if(userAvatar != null){
+            if(Objects.isNull(userAvatar)){
+                throw new BusinessException(ErrorCode.PARAMS_ERROR,"头像不能修改为空");
+            }
+            if (userAvatar.getSize() > CommonConstant.maxAvatarSize) {
+                throw new BusinessException(ErrorCode.FILE_OVER_SIZE);
+            }
+            if (!Objects.requireNonNull(userAvatar.getContentType()).startsWith("image/")) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR.getCode(), "文件类型不正确");
+            }
+            if (StringUtils.isNotBlank(user.getUserAvatar())) {
+                qCloudCosService.removeAvatar(user.getUserAvatar());
+            }
+            String url = qCloudCosService.upload(userAvatar);
+            user.setUserAvatar(url);
+        }
+
+
         boolean result = userService.updateById(user);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
-        return ResultUtils.success(true);
+        return ResultUtils.success(true,"更新成功");
+    }
+
+    /**
+     * 修改密码
+     */
+    @PutMapping("/password")
+    public BaseResponse<Boolean> updatePassword(@RequestBody UserPasswordRequest passwordRequest,HttpServletRequest request){
+        String oldPassword = passwordRequest.getOldPassword();
+        String newPassword1 = passwordRequest.getNewPassword1();
+        String newPassword2 = passwordRequest.getNewPassword2();
+        Boolean result=userService.updatePassword(oldPassword,newPassword1,newPassword2,request);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        return ResultUtils.success(true,"更新成功");
     }
 
     /**
@@ -227,7 +275,6 @@ public class UserController {
      * @return
      */
     @GetMapping("/get")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<User> getUserById(long id, HttpServletRequest request) {
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -244,8 +291,8 @@ public class UserController {
      * @param request
      * @return
      */
-    @GetMapping("/get/vo")
-    public BaseResponse<UserVO> getUserVOById(long id, HttpServletRequest request) {
+    @GetMapping("/info/{id}")
+    public BaseResponse<UserVO> getUserVOById(@PathVariable("id") Long id, HttpServletRequest request) {
         BaseResponse<User> response = getUserById(id, request);
         User user = response.getData();
         return ResultUtils.success(userService.getUserVO(user));

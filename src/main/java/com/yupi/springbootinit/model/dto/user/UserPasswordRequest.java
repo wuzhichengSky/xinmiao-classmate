@@ -1,32 +1,34 @@
 package com.yupi.springbootinit.model.dto.user;
 
-import java.io.Serializable;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.Serializable;
+
 /**
- * 用户更新请求
+ * 用户更新密码请求
  *
  * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
  * @from <a href="https://yupi.icu">编程导航知识星球</a>
  */
 @Data
-public class UserUpdateRequest implements Serializable {
+public class UserPasswordRequest implements Serializable {
 
     /**
-     * 用户昵称
+     * 旧密码
      */
-    private String userName;
+    private String oldPassword;
+
 
     /**
-     * 用户头像
+     * 新密码
      */
-    private MultipartFile userAvatar;
+    private String newPassword1;
 
     /**
-     * 简介
+     * 确认密码
      */
-    private String userProfile;
+    private String newPassword2;
 
 
 

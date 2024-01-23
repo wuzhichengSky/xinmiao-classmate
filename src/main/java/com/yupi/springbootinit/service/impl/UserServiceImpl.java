@@ -9,12 +9,13 @@ import com.yupi.springbootinit.common.ErrorCode;
 import com.yupi.springbootinit.constant.CommonConstant;
 import com.yupi.springbootinit.exception.BusinessException;
 import com.yupi.springbootinit.mapper.UserMapper;
+import com.yupi.springbootinit.model.IDcard;
 import com.yupi.springbootinit.model.dto.user.UserQueryRequest;
 import com.yupi.springbootinit.model.entity.User;
-import com.yupi.springbootinit.model.enums.UserRoleEnum;
 import com.yupi.springbootinit.model.vo.LoginUserVO;
 import com.yupi.springbootinit.model.vo.UserVO;
 import com.yupi.springbootinit.service.UserService;
+import com.yupi.springbootinit.utils.IDcard.IdcardUtils;
 import com.yupi.springbootinit.utils.SqlUtils;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 用户服务实现
@@ -40,7 +42,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     /**
      * 盐值，混淆密码
      */
-    public static final String SALT = "yupi";
+    public static final String SALT = "xinmiao";
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
@@ -103,6 +105,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (user == null) {
             log.info("user login failed, userAccount cannot match userPassword");
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户不存在或密码错误");
+        }
+        if(user.getIsIdentify() == 0){
+            throw new BusinessException(ErrorCode.NO_IDENTIFY_ERROR, "未认证，请先进行认证");
         }
         // 3. 记录用户的登录态
         request.getSession().setAttribute(USER_LOGIN_STATE, user);
@@ -270,5 +275,41 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
         return queryWrapper;
+    }
+
+    @Override
+    public Boolean updatePassword(String oldPassword, String newPassword1, String newPassword2, HttpServletRequest request) {
+        //校验两次密码
+        if(!newPassword1.equals(newPassword2)){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"两次密码不一致");
+        }
+        //校验新密码格式
+        /*if(!isMatch(newPassword1)){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"新密码格式不正确");
+        }*/
+        //判断旧密码正确性
+        User user= (User) request.getSession().getAttribute(USER_LOGIN_STATE);
+        String encryptPassword = DigestUtils.md5DigestAsHex((SALT + oldPassword).getBytes());
+        if(!encryptPassword.equals(user.getUserPassword())){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"旧密码不正确");
+        }
+        //更新数据库
+        user.setUserPassword(DigestUtils.md5DigestAsHex((SALT + newPassword1).getBytes()));
+        return updateById(user);
+    }
+
+    @Override
+    public Boolean userIdentify(MultipartFile iDcard, MultipartFile letter, MultipartFile avatar, HttpServletRequest request) {
+        //文件校验
+
+        //获取身份证信息、录取通知书信息
+        IDcard idcard = IdcardUtils.idcard(iDcard);
+        //身份证姓名与录取通知书姓名对比
+
+        //录取通知书学籍信息与库中对比
+
+        //身份证头像与用户上传头像对比
+
+        return null;
     }
 }
