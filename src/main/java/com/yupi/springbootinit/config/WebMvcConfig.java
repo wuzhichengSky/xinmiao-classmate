@@ -1,6 +1,7 @@
 package com.yupi.springbootinit.config;
 
-import com.yupi.springbootinit.handler.LoginInterceptor;
+import com.yupi.springbootinit.handler.AdminLoginInterceptor;
+import com.yupi.springbootinit.handler.UserLoginInterceptor;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -15,34 +16,23 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 @AllArgsConstructor
 public class WebMvcConfig implements WebMvcConfigurer {
-    private LoginInterceptor loginInterceptor;
+
+    private UserLoginInterceptor userLoginInterceptor;
+    private AdminLoginInterceptor adminLoginInterceptor;
 
     @Autowired
-    public void setLoginInterceptor(LoginInterceptor loginInterceptor) {
-        this.loginInterceptor = loginInterceptor;
+    public void setUserLoginInterceptor(UserLoginInterceptor userLoginInterceptor) {
+        this.userLoginInterceptor = userLoginInterceptor;
     }
 
-    /*private final LoginInterceptor loginInterceptor;
+    @Autowired
+    public void setAdminLoginInterceptor(AdminLoginInterceptor adminLoginInterceptor) {
+        this.adminLoginInterceptor = adminLoginInterceptor;
+    }
 
-    public WebMvcConfig(LoginInterceptor loginInterceptor) {
-        this.loginInterceptor = loginInterceptor;
-    }*/
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        //添加映射路径
-        /*registry.addMapping("/**")
-                //是否发送Cookie
-                .allowCredentials(true)
-                //设置放行哪些原始域   SpringBoot2.4.4下低版本使用.allowedOrigins("*")
-                .allowedOriginPatterns("*")
-                //放行哪些请求方式
-                .allowedMethods("GET", "POST", "PUT", "DELETE")
-                //.allowedMethods("*") //或者放行全部
-                //放行哪些原始请求头部信息
-                .allowedHeaders("*")
-                //暴露哪些原始请求头部信息
-                .exposedHeaders("*");*/
         registry.addMapping("/**")
                 .allowCredentials(true)
                 .allowedOriginPatterns("*")
@@ -53,11 +43,18 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(loginInterceptor)
-                .addPathPatterns("/**")                  //拦截所有
-                .excludePathPatterns("/user/login")      //放行登录接口
-                .excludePathPatterns("/user/identify")   //放行认证接口
-                .excludePathPatterns("/user/info/{id}"); //放行获取用户信息接口
+        //添加用户拦截器
+        registry.addInterceptor(userLoginInterceptor)
+                .addPathPatterns("/user/*")           //拦截用户所有
+                .excludePathPatterns("/user/login")        //放行登录接口
+                .excludePathPatterns("/user/identify")     //放行认证接口
+                .excludePathPatterns("/user/info/{id}")    //放行获取用户信息接口
+                .addPathPatterns("/post/*")           //拦截帖子所有
+                .excludePathPatterns("/post/list/page");   //放行帖子列表接口
 
+        //添加管理员拦截器
+        registry.addInterceptor(adminLoginInterceptor)
+                .addPathPatterns("/admin/*")            //拦截所有
+                .excludePathPatterns("/admin/login");   //放行登录接口
     }
 }

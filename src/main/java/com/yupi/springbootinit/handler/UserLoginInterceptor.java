@@ -8,9 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.AntPathMatcher;
-import org.springframework.util.PathMatcher;
-import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -27,7 +24,7 @@ import static com.yupi.springbootinit.constant.UserConstant.USER_LOGIN_STATE;
 @Component
 @Slf4j
 @NoArgsConstructor
-public class LoginInterceptor implements HandlerInterceptor {
+public class UserLoginInterceptor implements HandlerInterceptor {
     private UserService userService;
 
     @Autowired

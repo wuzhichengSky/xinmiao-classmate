@@ -57,7 +57,15 @@ public class PostFavourController {
         final User loginUser = userService.getLoginUser(request);
         long postId = postFavourAddRequest.getPostId();
         int result = postFavourService.doPostFavour(postId, loginUser);
-        return ResultUtils.success(result);
+        String message="";
+        if(result ==1){
+            message="收藏成功";
+        }else if(result==-1){
+            message="取消收藏成功";
+        }else {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        }
+        return ResultUtils.success(result,message);
     }
 
     /**
@@ -89,18 +97,19 @@ public class PostFavourController {
      * @param request
      */
     @GetMapping("/list/page")
-    public BaseResponse<Page<PostVO>> listFavourPostByPage(@RequestBody PostFavourQueryRequest postFavourQueryRequest,
+    public BaseResponse<Page<PostVO>> listFavourPostByPage(@RequestBody PostQueryRequest postFavourQueryRequest,
             HttpServletRequest request) {
         if (postFavourQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         long current = postFavourQueryRequest.getCurrent();
         long size = postFavourQueryRequest.getPageSize();
-        Long userId = postFavourQueryRequest.getUserId();
+        Long favourUserId = postFavourQueryRequest.getFavourUserId();
         // 限制爬虫
-        ThrowUtils.throwIf(size > 20 || userId == null, ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(size > 20 || favourUserId == null, ErrorCode.PARAMS_ERROR);
         Page<Post> postPage = postFavourService.listFavourPostByPage(new Page<>(current, size),
-                postService.getQueryWrapper(postFavourQueryRequest.getPostQueryRequest()), userId);
+                postService.getQueryWrapper(postFavourQueryRequest), favourUserId);
+
         return ResultUtils.success(postService.getPostVOPage(postPage, request));
     }
 }

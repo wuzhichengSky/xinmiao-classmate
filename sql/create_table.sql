@@ -69,3 +69,44 @@ create table if not exists post_favour
     index idx_postId (postId),
     index idx_userId (userId)
 ) comment '帖子收藏';
+
+-- 帖子点赞表（硬删除）
+create table if not exists post_comment
+(
+    id         bigint auto_increment comment 'id' primary key,
+    content    mediumtext comment '内容',
+    postId     bigint                             not null comment '帖子 id',
+    userId     bigint                             not null comment '创建用户 id',
+    createTime datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+    updateTime datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+    index idx_postId (postId),
+    index idx_userId (userId)
+) comment '帖子评论';
+
+-- 任务表
+create table if not exists task
+(
+    id         bigint auto_increment comment 'id' primary key,
+    taskName   varchar(256)                       not null comment '任务名称',
+    points     int                                not null comment '任务分数',
+    stage      tinyint                            not null comment '任务类别(0-开学前期  2-开学后)',
+    state      tinyint   default 2                not null comment '任务状态(2-正常、1-过期、0-失效)',
+    startTime  datetime                           not null comment '任务开始时间',
+
+    createTime datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+    updateTime datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+    isDelete   tinyint  default 0                 not null comment '是否删除'
+
+) comment '任务' collate = utf8mb4_unicode_ci;
+
+-- 任务_用户表
+create table if not exists task_user
+(
+    id         bigint auto_increment comment 'id' primary key,
+    userId     bigint                							not null comment '用户id',
+    taskId     bigint                							not null comment '任务id',
+    state      tinyint 														not null comment '任务状态(完成、不合格)'
+
+
+) comment '任务_用户' collate = utf8mb4_unicode_ci;
+

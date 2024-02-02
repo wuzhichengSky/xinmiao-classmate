@@ -40,18 +40,25 @@ public class PostThumbController {
      * @param request
      * @return resultNum 本次点赞变化数
      */
-    @PostMapping("/")
+    @PostMapping
     public BaseResponse<Integer> doThumb(@RequestBody PostThumbAddRequest postThumbAddRequest,
             HttpServletRequest request) {
         if (postThumbAddRequest == null || postThumbAddRequest.getPostId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         // 登录才能点赞
-        //TODO 登录逻辑
         final User loginUser = userService.getLoginUser(request);
         long postId = postThumbAddRequest.getPostId();
         int result = postThumbService.doPostThumb(postId, loginUser);
-        return ResultUtils.success(result);
+        String message="";
+        if(result ==1){
+            message="点赞成功";
+        }else if(result==-1){
+            message="取消点赞成功";
+        }else {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        }
+        return ResultUtils.success(result,message);
     }
 
 }

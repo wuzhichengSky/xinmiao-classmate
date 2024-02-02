@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.util.Date;
+
+import com.yupi.springbootinit.utils.excel.ExcelImport;
 import lombok.Data;
 
 /**
@@ -35,6 +37,11 @@ public class User implements Serializable {
     private String userProfile;
 
     /**
+     * 真实姓名
+     */
+    private String name;
+
+    /**
      * 学号
      */
     private String userAccount;
@@ -53,6 +60,11 @@ public class User implements Serializable {
      * 班级
      */
     private String classes;
+
+    /**
+     * 0-女  1-男
+     */
+    private Integer gender;
 
     /**
      * 积分
@@ -89,6 +101,7 @@ public class User implements Serializable {
      */
     @TableLogic
     private Integer isDelete;
+
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

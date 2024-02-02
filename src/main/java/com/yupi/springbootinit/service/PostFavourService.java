@@ -33,7 +33,7 @@ public interface PostFavourService extends IService<PostFavour> {
      * @param favourUserId
      * @return
      */
-    Page<Post> listFavourPostByPage(IPage<Post> page, Wrapper<Post> queryWrapper,
+    Page<Post> listFavourPostByPage(Page<Post> page, Wrapper<Post> queryWrapper,
             long favourUserId);
 
     /**

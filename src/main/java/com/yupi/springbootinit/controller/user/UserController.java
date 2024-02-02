@@ -23,6 +23,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.yupi.springbootinit.utils.FaceUtils;
 import com.yupi.springbootinit.utils.QCloudCosService;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
@@ -130,13 +131,14 @@ public class UserController {
      * @return
      */
     @PostMapping("/identify")
-    public BaseResponse<Boolean> userIdentify(MultipartFile IDcard,MultipartFile letter, MultipartFile avatar,  HttpServletRequest request) {
+    public BaseResponse<Boolean> userIdentify(MultipartFile IDcard,MultipartFile letter, MultipartFile avatar,  HttpServletRequest request) throws Exception {
         if(IDcard==null || letter==null || avatar==null){
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         Boolean result = userService.userIdentify(IDcard,letter,avatar, request);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
-        return ResultUtils.success(true,"认证成功");
+
+        return ResultUtils.success(result,"认证成功");
     }
 
 
@@ -205,7 +207,7 @@ public class UserController {
     @PostMapping("/delete")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> deleteUser(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
-        if (deleteRequest == null || deleteRequest.getId() <= 0) {
+        if (deleteRequest == null ) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         boolean b = userService.removeById(deleteRequest.getId());
@@ -231,10 +233,7 @@ public class UserController {
             user.setUserProfile(userProfile);
         }
 
-        if(userAvatar != null){
-            if(Objects.isNull(userAvatar)){
-                throw new BusinessException(ErrorCode.PARAMS_ERROR,"头像不能修改为空");
-            }
+        if(userAvatar != null && !userAvatar.isEmpty()){
             if (userAvatar.getSize() > CommonConstant.maxAvatarSize) {
                 throw new BusinessException(ErrorCode.FILE_OVER_SIZE);
             }
@@ -247,7 +246,6 @@ public class UserController {
             String url = qCloudCosService.upload(userAvatar);
             user.setUserAvatar(url);
         }
-
 
         boolean result = userService.updateById(user);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);

@@ -121,5 +121,7 @@ public interface UserService extends IService<User> {
 
     Boolean updatePassword(String oldPassword, String newPassword1, String newPassword2, HttpServletRequest request);
 
-    Boolean userIdentify(MultipartFile iDcard, MultipartFile letter, MultipartFile avatar, HttpServletRequest request);
+    Boolean userIdentify(MultipartFile iDcard, MultipartFile letter, MultipartFile avatar, HttpServletRequest request) throws Exception;
+
+    Boolean importUser(MultipartFile file) throws Exception;
 }

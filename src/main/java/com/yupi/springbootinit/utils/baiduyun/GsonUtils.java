@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2017 Baidu, Inc. All Rights Reserved.
  */
-package com.yupi.springbootinit.utils.IDcard;
+package com.yupi.springbootinit.utils.baiduyun;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

@@ -11,16 +11,21 @@ import com.yupi.springbootinit.exception.BusinessException;
 import com.yupi.springbootinit.mapper.UserMapper;
 import com.yupi.springbootinit.model.IDcard;
 import com.yupi.springbootinit.model.dto.user.UserQueryRequest;
+import com.yupi.springbootinit.model.entity.ExcelUser;
 import com.yupi.springbootinit.model.entity.User;
 import com.yupi.springbootinit.model.vo.LoginUserVO;
 import com.yupi.springbootinit.model.vo.UserVO;
 import com.yupi.springbootinit.service.UserService;
-import com.yupi.springbootinit.utils.IDcard.IdcardUtils;
+import com.yupi.springbootinit.utils.FaceUtils;
+import com.yupi.springbootinit.utils.IdcardUtils;
 import com.yupi.springbootinit.utils.SqlUtils;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
+
+import com.yupi.springbootinit.utils.excel.ExcelUtils;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
 import org.apache.commons.lang3.StringUtils;
@@ -299,17 +304,83 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public Boolean userIdentify(MultipartFile iDcard, MultipartFile letter, MultipartFile avatar, HttpServletRequest request) {
+    public Boolean userIdentify(MultipartFile iDcard, MultipartFile letter, MultipartFile avatar, HttpServletRequest request) throws Exception {
         //文件校验
-
+        fileValid(iDcard);
+        fileValid(letter);
+        fileValid(avatar);
         //获取身份证信息、录取通知书信息
         IDcard idcard = IdcardUtils.idcard(iDcard);
-        //身份证姓名与录取通知书姓名对比
 
+        //验证库中是否存在该用户
+        String name = idcard.getName();
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("name",name);
+        User user = getOne(wrapper);
+        if(user == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"不是大一新生，无法认证");
+        }
+        if(user.getIsIdentify() == 1){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户已认证");
+        }
+
+        //TODO 录取通知书信息校验
+        //身份证姓名与录取通知书姓名对比
         //录取通知书学籍信息与库中对比
 
-        //身份证头像与用户上传头像对比
+        //验证身份证头像与用户上传头像是否为同一人
+        if(!FaceUtils.faceMatch(iDcard,avatar)){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"上传证件照与身份证头像信息不一致");
+        }
+        //注册用户到头像库中
+        FaceUtils.add(avatar, String.valueOf(user.getId()));
 
-        return null;
+        //修改认证状态
+        user.setIsIdentify(1);
+        updateById(user);
+
+        return true;
+    }
+
+    @Override
+    public Boolean importUser(MultipartFile file) throws Exception {
+        List<ExcelUser> array = ExcelUtils.readMultipartFile(file,ExcelUser.class);
+        //保存到数据库
+        for (ExcelUser excelUser : array) {
+            User user = excelToUser(excelUser);
+            //数据库中存在该用户，则不保存
+            QueryWrapper<User> wrapper = new QueryWrapper<>();
+            wrapper.eq("userAccount",user.getUserAccount());
+
+            if(getOne(wrapper) == null){
+                if(!save(user)){
+                    throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private User excelToUser(ExcelUser excelUser) {
+        User user = new User();
+        user.setName(excelUser.getName());
+        user.setGender(excelUser.getGender());
+        user.setAcademy(excelUser.getAcademy());
+        user.setClasses(excelUser.getClasses());
+        user.setUserAccount(excelUser.getUserAccount());
+        //初始化密码为学号
+        user.setUserPassword(excelUser.getUserAccount());
+        return user;
+    }
+
+    private void fileValid(MultipartFile file){
+        //文件大小不超过2MB
+        if (file.getSize() > CommonConstant.maxAvatarSize*2) {
+            throw new BusinessException(ErrorCode.FILE_OVER_SIZE);
+        }
+        if (!Objects.requireNonNull(file.getContentType()).startsWith("image/")) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR.getCode(), "文件类型不正确");
+        }
     }
 }

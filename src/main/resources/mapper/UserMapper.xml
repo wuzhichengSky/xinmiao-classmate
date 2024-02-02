@@ -9,6 +9,7 @@
             <result property="userName" column="userName" jdbcType="VARCHAR"/>
             <result property="userAvatar" column="userAvatar" jdbcType="VARCHAR"/>
             <result property="userProfile" column="userProfile" jdbcType="VARCHAR"/>
+            <result property="name" column="name" jdbcType="VARCHAR"/>
             <result property="userAccount" column="userAccount" jdbcType="VARCHAR"/>
             <result property="userPassword" column="userPassword" jdbcType="VARCHAR"/>
             <result property="academy" column="academy" jdbcType="VARCHAR"/>
@@ -24,7 +25,7 @@
 
     <sql id="Base_Column_List">
         id,userName,userAvatar,
-        userProfile,userAccount,userPassword,
+        userProfile,name,userAccount,userPassword,
         academy,class,points,
         isIdentify,unionId,mpOpenId,
         createTime,updateTime,isDelete

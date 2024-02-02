@@ -1,6 +1,7 @@
 package com.yupi.springbootinit.controller.user;
 
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yupi.springbootinit.annotation.AuthCheck;
 import com.yupi.springbootinit.common.BaseResponse;
@@ -15,8 +16,10 @@ import com.yupi.springbootinit.model.dto.post.PostEditRequest;
 import com.yupi.springbootinit.model.dto.post.PostQueryRequest;
 import com.yupi.springbootinit.model.dto.post.PostUpdateRequest;
 import com.yupi.springbootinit.model.entity.Post;
+import com.yupi.springbootinit.model.entity.PostComment;
 import com.yupi.springbootinit.model.entity.User;
 import com.yupi.springbootinit.model.vo.PostVO;
+import com.yupi.springbootinit.service.PostCommentService;
 import com.yupi.springbootinit.service.PostService;
 import com.yupi.springbootinit.service.UserService;
 import java.util.List;
@@ -43,6 +46,9 @@ public class PostController {
     @Resource
     private UserService userService;
 
+    @Resource
+    private PostCommentService postCommentService;
+
     // region 增删改查
 
     /**
@@ -57,20 +63,24 @@ public class PostController {
         if (postAddRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        List<String> tags = postAddRequest.getTags();
+        for (String tag : tags) {
+            if(!"问答".equals(tag) && !"寻物".equals(tag) && !"交友".equals(tag) && !"活动信息".equals(tag) && !"学习".equals(tag)){
+                throw new BusinessException(ErrorCode.PARAMS_ERROR,"标签信息错误");
+            }
+        }
+
         Post post = new Post();
         BeanUtils.copyProperties(postAddRequest, post);
-        List<String> tags = postAddRequest.getTags();
         if (tags != null) {
             post.setTags(JSONUtil.toJsonStr(tags));
         }
         postService.validPost(post, true);
-        //TODO 登录逻辑
-        //User loginUser = userService.getLoginUser(request);
-        //post.setUserId(loginUser.getId());
+
+        User loginUser = userService.getLoginUser(request);
+        post.setUserId(loginUser.getId());
         post.setFavourNum(0);
         post.setThumbNum(0);
-
-        post.setUserId(1L);
 
         boolean result = postService.save(post);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
@@ -87,19 +97,23 @@ public class PostController {
      */
     @DeleteMapping
     public BaseResponse<Boolean> deletePost(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
-        if (deleteRequest == null || deleteRequest.getId() <= 0) {
+        if (deleteRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        //TODO 登录逻辑
-        //User user = userService.getLoginUser(request);
-        long id = deleteRequest.getId();
+        User user = userService.getLoginUser(request);
+        String id = deleteRequest.getId();
         // 判断是否存在
         Post oldPost = postService.getById(id);
         ThrowUtils.throwIf(oldPost == null, ErrorCode.NOT_FOUND_ERROR);
-        // 仅本人或管理员可删除
-        /*if (!oldPost.getUserId().equals(user.getId()) && !userService.isAdmin(request)) {
+        // 仅本人可删除
+        if (!oldPost.getUserId().equals(user.getId())) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-        }*/
+        }
+        //删除所有评论
+        LambdaQueryWrapper<PostComment> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(PostComment::getPostId, id);
+        postCommentService.remove(wrapper);
+        //删除帖子
         boolean b = postService.removeById(id);
         return ResultUtils.success(b,"删除成功");
     }
@@ -182,6 +196,7 @@ public class PostController {
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
         Page<Post> postPage = postService.page(new Page<>(current, size),
                 postService.getQueryWrapper(postQueryRequest));
+
         return ResultUtils.success(postService.getPostVOPage(postPage, request));
     }
 

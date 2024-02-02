@@ -18,6 +18,8 @@ import org.springframework.aop.framework.AopContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  * 帖子收藏服务实现
  *
@@ -58,11 +60,26 @@ public class PostFavourServiceImpl extends ServiceImpl<PostFavourMapper, PostFav
 
 
     @Override
-    public Page<Post> listFavourPostByPage(IPage<Post> page, Wrapper<Post> queryWrapper, long favourUserId) {
+    public Page<Post> listFavourPostByPage(Page<Post> page, Wrapper<Post> queryWrapper, long favourUserId) {
         if (favourUserId <= 0) {
-            return new Page<>();
+            return page;
         }
-        return baseMapper.listFavourPostByPage(page, queryWrapper, favourUserId);
+        //在post_favour表中得到收藏的post id
+        QueryWrapper<PostFavour> favourQueryWrapper = new QueryWrapper<>();
+        favourQueryWrapper.eq("userId",favourUserId);
+        List<PostFavour> postFavours = list(favourQueryWrapper);
+        if(postFavours.isEmpty()){
+            return page;
+        }
+
+        //在post表中查询对应post的详细内容
+        // 获取post id列表
+        List<Long> postIds = postFavours.stream().map(PostFavour::getPostId).toList();
+        QueryWrapper<Post> postQueryWrapper = new QueryWrapper<>();
+        postQueryWrapper.in("id",postIds);
+        Page<Post> paged = postService.page(page, postQueryWrapper);
+
+        return postService.page(paged,queryWrapper);
     }
 
     /**
@@ -96,7 +113,7 @@ public class PostFavourServiceImpl extends ServiceImpl<PostFavourMapper, PostFav
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR);
             }
         } else {
-            // 未帖子收藏
+            // 帖子未收藏
             result = this.save(postFavour);
             if (result) {
                 // 帖子收藏数 + 1
