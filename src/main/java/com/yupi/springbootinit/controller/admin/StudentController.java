@@ -8,6 +8,7 @@ import com.yupi.springbootinit.exception.BusinessException;
 import com.yupi.springbootinit.exception.ThrowUtils;
 import com.yupi.springbootinit.model.dto.admin.AdminLoginRequest;
 import com.yupi.springbootinit.model.entity.ExcelUser;
+import com.yupi.springbootinit.model.entity.User;
 import com.yupi.springbootinit.service.UserService;
 import com.yupi.springbootinit.utils.FaceUtils;
 import com.yupi.springbootinit.utils.PictureUtils;
@@ -43,7 +44,14 @@ public class StudentController {
      * @return
      */
     @PostMapping("/import")
-    public BaseResponse<Boolean> importUser(@RequestPart("file") MultipartFile file) throws Exception {
+    public BaseResponse<Boolean> importUser(@RequestPart("file") MultipartFile file,HttpServletRequest request) throws Exception {
+        //判断是否登录
+        // 先判断是否已登录
+        Object adminObj = request.getSession().getAttribute(ADMIN_LOGIN_STATE);
+        if (adminObj == null ) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+
         if(file.isEmpty()){
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -51,26 +59,6 @@ public class StudentController {
         ThrowUtils.throwIf(!result,ErrorCode.SYSTEM_ERROR);
 
         return  ResultUtils.success(result,"导入成功");
-    }
-
-    @PostMapping("/login")
-    public BaseResponse<AdminLoginRequest> userLogin(@RequestBody AdminLoginRequest adminLoginRequest, HttpServletRequest request) {
-
-
-        if (adminLoginRequest == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        String count = adminLoginRequest.getAccount();
-        String password = adminLoginRequest.getPassword();
-        if (StringUtils.isAnyBlank(count, password)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        if(!ADMIN_COUNT.equals(count) || !ADMIN_PASSWORD.equals(password)){
-            throw new BusinessException(ErrorCode.PARAMS_ERROR,"账号或密码错误");
-        }
-
-        request.getSession().setAttribute(ADMIN_LOGIN_STATE, adminLoginRequest);
-        return ResultUtils.success(adminLoginRequest,"登录成功");
     }
 
 }

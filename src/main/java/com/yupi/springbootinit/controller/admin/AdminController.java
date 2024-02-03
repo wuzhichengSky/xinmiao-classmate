@@ -64,6 +64,10 @@ public class AdminController {
         if (request == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        //判断是否登录
+        if (request.getSession().getAttribute(ADMIN_LOGIN_STATE) == null) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "未登录");
+        }
         // 移除登录态
         request.getSession().removeAttribute(ADMIN_LOGIN_STATE);
         return ResultUtils.success(true,"注销成功");

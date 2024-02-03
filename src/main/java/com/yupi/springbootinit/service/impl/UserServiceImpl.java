@@ -353,6 +353,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             wrapper.eq("userAccount",user.getUserAccount());
 
             if(getOne(wrapper) == null){
+                //将密码加密;
+                String encryptPassword = DigestUtils.md5DigestAsHex((SALT + user.getUserAccount()).getBytes());
+                user.setUserPassword(encryptPassword);
                 if(!save(user)){
                     throw new BusinessException(ErrorCode.SYSTEM_ERROR);
                 }

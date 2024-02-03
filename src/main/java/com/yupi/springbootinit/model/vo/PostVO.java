@@ -105,11 +105,8 @@ public class PostVO implements Serializable {
             return null;
         }
         PostVO postVO = new PostVO();
-        System.out.println(111);
         BeanUtils.copyProperties(post, postVO);
-        System.out.println(222);
         postVO.setTagList(JSONUtil.toList(post.getTags(), String.class));
-        System.out.println(postVO);
         return postVO;
     }
 }
