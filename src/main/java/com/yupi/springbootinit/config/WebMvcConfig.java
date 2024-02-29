@@ -43,6 +43,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        //TODO 给其他接口添加拦截器，同时增加认证拦截逻辑
+
         //添加用户拦截器
         registry.addInterceptor(userLoginInterceptor)
                 .addPathPatterns("/user/*")           //拦截用户所有

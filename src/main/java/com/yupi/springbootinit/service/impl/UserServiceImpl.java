@@ -1,6 +1,7 @@
 package com.yupi.springbootinit.service.impl;
 
 import static com.yupi.springbootinit.constant.UserConstant.USER_LOGIN_STATE;
+import static com.yupi.springbootinit.utils.FileUtils.fileValid;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -377,13 +378,5 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return user;
     }
 
-    private void fileValid(MultipartFile file){
-        //文件大小不超过2MB
-        if (file.getSize() > CommonConstant.maxAvatarSize*2) {
-            throw new BusinessException(ErrorCode.FILE_OVER_SIZE);
-        }
-        if (!Objects.requireNonNull(file.getContentType()).startsWith("image/")) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR.getCode(), "文件类型不正确");
-        }
-    }
+
 }

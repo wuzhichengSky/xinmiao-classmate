@@ -48,25 +48,9 @@ public class PictureUtils {
             }
         }
 
-        // 将图片文件转化为字节数组
-        FileInputStream fis = new FileInputStream(file);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        String base64Encode = base64Encode(file);
 
-        byte[] buffer = new byte[1024];
-        int len;
-        while ((len = fis.read(buffer)) != -1) {
-            baos.write(buffer, 0, len);
-        }
-
-        byte[] data = baos.toByteArray();
-
-        fis.close();
-        baos.close();
-
-        // 使用Base64编码算法将字节数组转化为Base64编码的字符串
-        String base = Base64.getEncoder().encodeToString(data);
-
-        return base;
+        return base64Encode;
     }
 
     public static String base64Encode(File file) throws IOException {

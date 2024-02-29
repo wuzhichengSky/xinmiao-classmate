@@ -10,9 +10,11 @@ import com.yupi.springbootinit.model.dto.task.TaskQueryRequest;
 import com.yupi.springbootinit.model.entity.Task;
 import com.yupi.springbootinit.model.vo.TaskVO;
 import com.yupi.springbootinit.service.TaskService;
+import com.yupi.springbootinit.service.TaskUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -32,6 +34,9 @@ public class UserTaskController {
 
     @Resource
     private TaskService taskService;
+
+    @Resource
+    private TaskUserService taskUserService;
 
 
     /**
@@ -56,5 +61,23 @@ public class UserTaskController {
                 taskService.getQueryWrapper(taskQueryRequest));
 
         return ResultUtils.success(taskService.getPostVOPage(taskPage,request),"查找成功");
+    }
+
+    /**
+     * 完成任务
+     *
+     * @param request
+     * @return
+     */
+    @PostMapping("/finish")
+    public BaseResponse<Boolean> finishTask(String id, MultipartFile image,
+                                                     HttpServletRequest request) throws Exception {
+        if(request.getSession().getAttribute(USER_LOGIN_STATE)==null){
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+
+        Boolean result = taskUserService.finishTask(id,image,request);
+        ThrowUtils.throwIf(!result,ErrorCode.SYSTEM_ERROR);
+        return ResultUtils.success(result,"提交成功");
     }
 }

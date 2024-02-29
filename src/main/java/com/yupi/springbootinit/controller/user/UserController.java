@@ -39,6 +39,7 @@ import org.yaml.snakeyaml.events.Event;
 
 import static com.yupi.springbootinit.constant.UserConstant.USER_LOGIN_STATE;
 import static com.yupi.springbootinit.service.impl.UserServiceImpl.SALT;
+import static com.yupi.springbootinit.utils.FileUtils.fileValid;
 
 /**
  * @author wzc
@@ -234,12 +235,7 @@ public class UserController {
         }
 
         if(userAvatar != null && !userAvatar.isEmpty()){
-            if (userAvatar.getSize() > CommonConstant.maxAvatarSize) {
-                throw new BusinessException(ErrorCode.FILE_OVER_SIZE);
-            }
-            if (!Objects.requireNonNull(userAvatar.getContentType()).startsWith("image/")) {
-                throw new BusinessException(ErrorCode.PARAMS_ERROR.getCode(), "文件类型不正确");
-            }
+            fileValid(userAvatar);
             if (StringUtils.isNotBlank(user.getUserAvatar())) {
                 qCloudCosService.removeAvatar(user.getUserAvatar());
             }
