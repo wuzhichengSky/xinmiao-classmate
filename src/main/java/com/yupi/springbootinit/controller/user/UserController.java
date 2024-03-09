@@ -11,9 +11,12 @@ import com.yupi.springbootinit.constant.CommonConstant;
 import com.yupi.springbootinit.constant.UserConstant;
 import com.yupi.springbootinit.exception.BusinessException;
 import com.yupi.springbootinit.exception.ThrowUtils;
+import com.yupi.springbootinit.model.dto.task.TaskQueryRequest;
 import com.yupi.springbootinit.model.dto.user.*;
+import com.yupi.springbootinit.model.entity.Task;
 import com.yupi.springbootinit.model.entity.User;
 import com.yupi.springbootinit.model.vo.LoginUserVO;
+import com.yupi.springbootinit.model.vo.TaskVO;
 import com.yupi.springbootinit.model.vo.UserVO;
 import com.yupi.springbootinit.service.UserService;
 
@@ -25,6 +28,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.yupi.springbootinit.utils.FaceUtils;
 import com.yupi.springbootinit.utils.QCloudCosService;
+import com.yupi.springbootinit.utils.UserThreadLocal;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
 import me.chanjar.weixin.common.bean.oauth2.WxOAuth2AccessToken;
@@ -37,6 +41,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.yaml.snakeyaml.events.Event;
 
+import static com.yupi.springbootinit.constant.UserConstant.ADMIN_LOGIN_STATE;
 import static com.yupi.springbootinit.constant.UserConstant.USER_LOGIN_STATE;
 import static com.yupi.springbootinit.service.impl.UserServiceImpl.SALT;
 import static com.yupi.springbootinit.utils.FileUtils.fileValid;
@@ -166,8 +171,8 @@ public class UserController {
      */
     @GetMapping("/info")
     public BaseResponse<LoginUserVO> getLoginUser(HttpServletRequest request) {
-        User user = userService.getLoginUser(request);
-        return ResultUtils.success(userService.getLoginUserVO(user));
+        User user = UserThreadLocal.get();
+        return ResultUtils.success(userService.getLoginUserVO(user,""));
     }
 
     // endregion
@@ -268,15 +273,15 @@ public class UserController {
      * @param request
      * @return
      */
-    @GetMapping("/get")
-    public BaseResponse<User> getUserById(long id, HttpServletRequest request) {
-        if (id <= 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        User user = userService.getById(id);
-        ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR);
-        return ResultUtils.success(user);
-    }
+//    @GetMapping("/get")
+//    public BaseResponse<User> getUserById(long id, HttpServletRequest request) {
+//        if (id <= 0) {
+//            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+//        }
+//        User user = userService.getById(id);
+//        ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR);
+//        return ResultUtils.success(user);
+//    }
 
     /**
      * 根据 id 获取包装类
@@ -287,53 +292,52 @@ public class UserController {
      */
     @GetMapping("/info/{id}")
     public BaseResponse<UserVO> getUserVOById(@PathVariable("id") Long id, HttpServletRequest request) {
-        BaseResponse<User> response = getUserById(id, request);
-        User user = response.getData();
+        User user = userService.getById(id);
         return ResultUtils.success(userService.getUserVO(user));
     }
 
-    /**
-     * 分页获取用户列表（仅管理员）
-     *
-     * @param userQueryRequest
-     * @param request
-     * @return
-     */
-    @PostMapping("/list/page")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Page<User>> listUserByPage(@RequestBody UserQueryRequest userQueryRequest,
-            HttpServletRequest request) {
-        long current = userQueryRequest.getCurrent();
-        long size = userQueryRequest.getPageSize();
-        Page<User> userPage = userService.page(new Page<>(current, size),
-                userService.getQueryWrapper(userQueryRequest));
-        return ResultUtils.success(userPage);
-    }
+//    /**
+//     * 分页获取用户列表（仅管理员）
+//     *
+//     * @param userQueryRequest
+//     * @param request
+//     * @return
+//     */
+//    @PostMapping("/list/page")
+//    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+//    public BaseResponse<Page<User>> listUserByPage(@RequestBody UserQueryRequest userQueryRequest,
+//            HttpServletRequest request) {
+//        long current = userQueryRequest.getCurrent();
+//        long size = userQueryRequest.getPageSize();
+//        Page<User> userPage = userService.page(new Page<>(current, size),
+//                userService.getQueryWrapper(userQueryRequest));
+//        return ResultUtils.success(userPage);
+//    }
 
-    /**
-     * 分页获取用户封装列表
-     *
-     * @param userQueryRequest
-     * @param request
-     * @return
-     */
-    @PostMapping("/list/page/vo")
-    public BaseResponse<Page<UserVO>> listUserVOByPage(@RequestBody UserQueryRequest userQueryRequest,
-            HttpServletRequest request) {
-        if (userQueryRequest == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        long current = userQueryRequest.getCurrent();
-        long size = userQueryRequest.getPageSize();
-        // 限制爬虫
-        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
-        Page<User> userPage = userService.page(new Page<>(current, size),
-                userService.getQueryWrapper(userQueryRequest));
-        Page<UserVO> userVOPage = new Page<>(current, size, userPage.getTotal());
-        List<UserVO> userVO = userService.getUserVO(userPage.getRecords());
-        userVOPage.setRecords(userVO);
-        return ResultUtils.success(userVOPage);
-    }
+//    /**
+//     * 分页获取用户封装列表
+//     *
+//     * @param userQueryRequest
+//     * @param request
+//     * @return
+//     */
+//    @PostMapping("/list/page/vo")
+//    public BaseResponse<Page<UserVO>> listUserVOByPage(@RequestBody UserQueryRequest userQueryRequest,
+//            HttpServletRequest request) {
+//        if (userQueryRequest == null) {
+//            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+//        }
+//        long current = userQueryRequest.getCurrent();
+//        long size = userQueryRequest.getPageSize();
+//        // 限制爬虫
+//        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+//        Page<User> userPage = userService.page(new Page<>(current, size),
+//                userService.getQueryWrapper(userQueryRequest));
+//        Page<UserVO> userVOPage = new Page<>(current, size, userPage.getTotal());
+//        List<UserVO> userVO = userService.getUserVO(userPage.getRecords());
+//        userVOPage.setRecords(userVO);
+//        return ResultUtils.success(userVOPage);
+//    }
 
     // endregion
 
@@ -357,5 +361,23 @@ public class UserController {
         boolean result = userService.updateById(user);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
+    }
+
+    /**
+     * 用户列表
+     *
+     * @return
+     */
+    @GetMapping("/get")
+    public BaseResponse<Page<UserVO>> listUserByPage(@RequestBody UserQueryRequest userQueryRequest,
+                                                     HttpServletRequest request) {
+        long current = userQueryRequest.getCurrent();
+        long size = userQueryRequest.getPageSize();
+        // 限制爬虫
+        ThrowUtils.throwIf(size > 50, ErrorCode.PARAMS_ERROR);
+
+        Page<User> taskPage = userService.page(new Page<>(current, size),
+                userService.getQueryWrapper(userQueryRequest));
+        return ResultUtils.success(userService.getUserVOPage(taskPage,request),"查找成功");
     }
 }

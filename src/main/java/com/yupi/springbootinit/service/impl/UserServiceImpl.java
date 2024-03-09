@@ -1,10 +1,14 @@
 package com.yupi.springbootinit.service.impl;
 
+import static cn.hutool.core.util.ReUtil.isMatch;
 import static com.yupi.springbootinit.constant.UserConstant.USER_LOGIN_STATE;
 import static com.yupi.springbootinit.utils.FileUtils.fileValid;
+import static com.yupi.springbootinit.utils.IdcardUtils.isValidID;
 
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.yupi.springbootinit.common.ErrorCode;
 import com.yupi.springbootinit.constant.CommonConstant;
@@ -13,16 +17,16 @@ import com.yupi.springbootinit.mapper.UserMapper;
 import com.yupi.springbootinit.model.IDcard;
 import com.yupi.springbootinit.model.dto.user.UserQueryRequest;
 import com.yupi.springbootinit.model.entity.ExcelUser;
+import com.yupi.springbootinit.model.entity.Task;
+import com.yupi.springbootinit.model.entity.TaskUser;
 import com.yupi.springbootinit.model.entity.User;
 import com.yupi.springbootinit.model.vo.LoginUserVO;
+import com.yupi.springbootinit.model.vo.TaskVO;
 import com.yupi.springbootinit.model.vo.UserVO;
 import com.yupi.springbootinit.service.UserService;
-import com.yupi.springbootinit.utils.FaceUtils;
-import com.yupi.springbootinit.utils.IdcardUtils;
-import com.yupi.springbootinit.utils.SqlUtils;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import com.yupi.springbootinit.utils.*;
+
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 
@@ -49,6 +53,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * 盐值，混淆密码
      */
     public static final String SALT = "xinmiao";
+
+
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
@@ -116,8 +122,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.NO_IDENTIFY_ERROR, "未认证，请先进行认证");
         }
         // 3. 记录用户的登录态
-        request.getSession().setAttribute(USER_LOGIN_STATE, user);
-        return this.getLoginUserVO(user);
+        String token = JwtUtil.createToken(user.getId().toString());
+        return this.getLoginUserVO(user,token);
     }
 
     @Override
@@ -231,12 +237,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public LoginUserVO getLoginUserVO(User user) {
+    public LoginUserVO getLoginUserVO(User user,String token) {
         if (user == null) {
             return null;
         }
         LoginUserVO loginUserVO = new LoginUserVO();
         BeanUtils.copyProperties(user, loginUserVO);
+        loginUserVO.setToken(token);
         return loginUserVO;
     }
 
@@ -263,21 +270,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (userQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
         }
-        Long id = userQueryRequest.getId();
-        String unionId = userQueryRequest.getUnionId();
-        String mpOpenId = userQueryRequest.getMpOpenId();
-        String userName = userQueryRequest.getUserName();
-        String userProfile = userQueryRequest.getUserProfile();
-        String userRole = userQueryRequest.getUserRole();
+        String name = userQueryRequest.getName();
+        String userAccount = userQueryRequest.getUserAccount();
+        String academy = userQueryRequest.getAcademy();
+        String classes = userQueryRequest.getClasses();
         String sortField = userQueryRequest.getSortField();
         String sortOrder = userQueryRequest.getSortOrder();
+
+
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq(id != null, "id", id);
-        queryWrapper.eq(StringUtils.isNotBlank(unionId), "unionId", unionId);
-        queryWrapper.eq(StringUtils.isNotBlank(mpOpenId), "mpOpenId", mpOpenId);
-        queryWrapper.eq(StringUtils.isNotBlank(userRole), "userRole", userRole);
-        queryWrapper.like(StringUtils.isNotBlank(userProfile), "userProfile", userProfile);
-        queryWrapper.like(StringUtils.isNotBlank(userName), "userName", userName);
+        queryWrapper.eq(StringUtils.isNotBlank(name), "name", name);
+        queryWrapper.eq(StringUtils.isNotBlank(userAccount), "userAccount", userAccount);
+        queryWrapper.eq(StringUtils.isNotBlank(academy), "academy", academy);
+        queryWrapper.like(StringUtils.isNotBlank(classes), "classes", classes);
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
         return queryWrapper;
@@ -290,11 +295,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"两次密码不一致");
         }
         //校验新密码格式
-        /*if(!isMatch(newPassword1)){
-            throw new BusinessException(ErrorCode.PARAMS_ERROR,"新密码格式不正确");
-        }*/
+
         //判断旧密码正确性
-        User user= (User) request.getSession().getAttribute(USER_LOGIN_STATE);
+        User user = UserThreadLocal.get();
         String encryptPassword = DigestUtils.md5DigestAsHex((SALT + oldPassword).getBytes());
         if(!encryptPassword.equals(user.getUserPassword())){
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"旧密码不正确");
@@ -366,16 +369,86 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return true;
     }
 
+    @Override
+    public Integer getTotal() {
+        List<User> list = list();
+        return list.size();
+    }
+
+    @Override
+    public Integer getIdentifyTotal() {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(User::getIsIdentify,1);
+        return list(queryWrapper).size();
+    }
+
     private User excelToUser(ExcelUser excelUser) {
         User user = new User();
         user.setName(excelUser.getName());
         user.setGender(excelUser.getGender());
+        user.setUserAccount(excelUser.getUserAccount());
+        //对身份证格式进行校验
+        user.setIdNumber(excelUser.getIdNumber());
+        if(!isValidID(excelUser.getIdNumber())){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"存在身份证号不合法");
+        }
         user.setAcademy(excelUser.getAcademy());
         user.setClasses(excelUser.getClasses());
-        user.setUserAccount(excelUser.getUserAccount());
+        user.setBuilding(excelUser.getBuilding());
+        user.setRoom(excelUser.getRoom());
         //初始化密码为学号
         user.setUserPassword(excelUser.getUserAccount());
+
         return user;
+    }
+
+    public Page<UserVO> getUserVOPage(Page<User> userPage, HttpServletRequest request) {
+        List<User> userList = userPage.getRecords();
+        Page<UserVO> userVOPage = new Page<>(userPage.getCurrent(), userPage.getSize(), userPage.getTotal());
+        if (CollUtil.isEmpty(userList)) {
+            return userVOPage;
+        }
+
+        List<UserVO> userVOList = userList.stream().map(user -> {
+            UserVO userVO = new UserVO();
+            BeanUtils.copyProperties(user,userVO);
+            return userVO;
+        }).collect(Collectors.toList());
+
+
+        userVOPage.setRecords(userVOList);
+        return userVOPage;
+    }
+
+    @Override
+    public Boolean importOneUser(User user) {
+        String name = user.getName();
+        String userAccount = user.getUserAccount();
+        Integer gender = user.getGender();
+        String idNumber = user.getIdNumber();
+        String academy = user.getAcademy();
+        String classes = user.getClasses();
+        String building = user.getBuilding();
+        String room = user.getRoom();
+        if(gender == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        if(StringUtils.isAnyBlank(name,userAccount,idNumber,academy,classes,building,room)){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        //身份证号校验
+        if(!isValidID(idNumber)){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"身份证号不合法");
+        }
+        //性别校验
+        if(gender!=0 && gender!=1){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"性别错误");
+        }
+
+        //填充信息  密码初始化为学号
+        String encryptPassword = DigestUtils.md5DigestAsHex((SALT + user.getUserAccount()).getBytes());
+        user.setUserPassword(encryptPassword);
+        return save(user);
     }
 
 

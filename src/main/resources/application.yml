@@ -4,6 +4,13 @@
 spring:
   application:
     name: springboot-init
+
+  redis:
+    host: 120.79.25.150
+    port: 6379
+    connect-timeout: 3000
+    password: wuzhicheng
+
   # 默认 dev 环境
   profiles:
     active: dev

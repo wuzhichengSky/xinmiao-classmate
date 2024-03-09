@@ -1,6 +1,7 @@
 package com.yupi.springbootinit.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.yupi.springbootinit.model.dto.user.UserQueryRequest;
 import com.yupi.springbootinit.model.entity.User;
@@ -93,7 +94,7 @@ public interface UserService extends IService<User> {
      *
      * @return
      */
-    LoginUserVO getLoginUserVO(User user);
+    LoginUserVO getLoginUserVO(User user,String token);
 
     /**
      * 获取脱敏的用户信息
@@ -124,4 +125,12 @@ public interface UserService extends IService<User> {
     Boolean userIdentify(MultipartFile iDcard, MultipartFile letter, MultipartFile avatar, HttpServletRequest request) throws Exception;
 
     Boolean importUser(MultipartFile file) throws Exception;
+
+    Integer getTotal();
+
+    Integer getIdentifyTotal();
+
+    Page<UserVO> getUserVOPage(Page<User> taskPage, HttpServletRequest request);
+
+    Boolean importOneUser(User user);
 }

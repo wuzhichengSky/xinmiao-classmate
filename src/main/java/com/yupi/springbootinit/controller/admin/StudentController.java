@@ -45,13 +45,6 @@ public class StudentController {
      */
     @PostMapping("/import")
     public BaseResponse<Boolean> importUser(@RequestPart("file") MultipartFile file,HttpServletRequest request) throws Exception {
-        //判断是否登录
-        // 先判断是否已登录
-        Object adminObj = request.getSession().getAttribute(ADMIN_LOGIN_STATE);
-        if (adminObj == null ) {
-            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
-        }
-
         if(file.isEmpty()){
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -59,6 +52,44 @@ public class StudentController {
         ThrowUtils.throwIf(!result,ErrorCode.SYSTEM_ERROR);
 
         return  ResultUtils.success(result,"导入成功");
+    }
+
+    /**
+     * 单条导入学生数据
+     *
+     * @return
+     */
+    @PostMapping("/import/one")
+    public BaseResponse<Boolean> importOneUser(@RequestBody User user,HttpServletRequest request) throws Exception {
+        if(user == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        Boolean result=userService.importOneUser(user);
+        ThrowUtils.throwIf(!result,ErrorCode.SYSTEM_ERROR);
+
+        return  ResultUtils.success(result,"导入成功");
+    }
+
+    /**
+     * 获取学生总数
+     *
+     * @return
+     */
+    @GetMapping("/total")
+    public BaseResponse<Integer> getTotal(HttpServletRequest request) throws Exception {
+        Integer result=userService.getTotal();
+        return  ResultUtils.success(result,"查询成功");
+    }
+
+    /**
+     * 获取已认证人数
+     *
+     * @return
+     */
+    @GetMapping("/identify_total")
+    public BaseResponse<Integer> getIdentifyTotal(HttpServletRequest request) throws Exception {
+        Integer result=userService.getIdentifyTotal();
+        return  ResultUtils.success(result,"查询成功");
     }
 
 }

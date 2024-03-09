@@ -52,10 +52,7 @@ public class UserTaskController {
         long current = taskQueryRequest.getCurrent();
         long size = taskQueryRequest.getPageSize();
         // 限制爬虫
-        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
-        if(request.getSession().getAttribute(ADMIN_LOGIN_STATE) == null && request.getSession().getAttribute(USER_LOGIN_STATE) == null){
-            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
-        }
+        ThrowUtils.throwIf(size > 50, ErrorCode.PARAMS_ERROR);
 
         Page<Task> taskPage = taskService.page(new Page<>(current, size),
                 taskService.getQueryWrapper(taskQueryRequest));

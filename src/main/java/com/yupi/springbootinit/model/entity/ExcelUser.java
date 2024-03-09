@@ -41,6 +41,12 @@ public class ExcelUser implements Serializable {
     private String userAccount;
 
     /**
+     * 身份证号
+     */
+    @ExcelImport(value = "身份证号",unique = true)
+    private String idNumber;
+
+    /**
      * 学院
      */
     @ExcelImport("学院")
@@ -51,6 +57,18 @@ public class ExcelUser implements Serializable {
      */
     @ExcelImport("班级")
     private String classes;
+
+    /**
+     * 寝室楼栋
+     */
+    @ExcelImport("寝室楼栋")
+    private String building;
+
+    /**
+     * 房间号
+     */
+    @ExcelImport("寝室房间号")
+    private String room;
 
     /**
      * 原始json数据(方便纠错)

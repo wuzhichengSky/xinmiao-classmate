@@ -49,5 +49,17 @@ public class AdminTaskController {
         return ResultUtils.success(task,"发布成功");
     }
 
+    /**
+     * 获取发布任务总数
+     *
+     * @param request
+     * @return
+     */
+    @GetMapping("/total")
+    public BaseResponse<Integer> getTotal(HttpServletRequest request) {
+        Integer  result = taskService.getTotal();
+        return ResultUtils.success(result,"查询成功");
+    }
+
 
 }

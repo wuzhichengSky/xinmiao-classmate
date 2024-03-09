@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Calendar;
 
 /**
 * 身份证识别
@@ -70,6 +71,8 @@ public class IdcardUtils {
             return iDcard;
     }
 
+
+
     static String getAccessToken(String api_key,String secret_key) throws IOException {
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
         RequestBody body = RequestBody.create(mediaType, "grant_type=client_credentials&client_id=" + api_key
@@ -89,6 +92,57 @@ public class IdcardUtils {
         // byte[]-->String（解码后的字符串）
         String str = new String(base64Data, StandardCharsets.UTF_8);
         return str;
+    }
+
+    public static boolean isValidID(String id) {
+        // 首先检查身份证号是否为空
+        if (id == null || id.isEmpty()) {
+            return false;
+        }
+
+        // 正则表达式匹配身份证号格式
+        String regex = "\\d{17}[0-9Xx]";
+        if (!id.matches(regex)) {
+            return false;
+        }
+
+        // 验证身份证号最后一位校验码
+        char[] chars = id.toUpperCase().toCharArray();
+        int[] coefficient = {7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2};
+        char[] checkCode = {'1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'};
+        int sum = 0;
+        for (int i = 0; i < 17; i++) {
+            sum += (chars[i] - '0') * coefficient[i];
+        }
+        int remainder = sum % 11;
+        char lastChar = chars[17];
+        char expectedChar = checkCode[remainder];
+
+        if (lastChar != expectedChar) {
+            return false;
+        }
+
+        // 验证身份证号中的生日是否合法
+        int year = Integer.parseInt(id.substring(6, 10));
+        int month = Integer.parseInt(id.substring(10, 12));
+        int day = Integer.parseInt(id.substring(12, 14));
+
+        Calendar calendar = Calendar.getInstance();
+        int currentYear = calendar.get(Calendar.YEAR);
+
+        if (year < 1900 || year > currentYear || month < 1 || month > 12 || day < 1 || day > 31) {
+            return false;
+        }
+
+        // 验证闰年和平年的日期范围
+        boolean isLeapYear = (year % 400 == 0) || (year % 4 == 0 && year % 100 != 0);
+        int[] daysInMonth = {31, isLeapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+        if (day > daysInMonth[month - 1]) {
+            return false;
+        }
+
+        // 最后都通过了，则认为身份证号合法
+        return true;
     }
 
 }

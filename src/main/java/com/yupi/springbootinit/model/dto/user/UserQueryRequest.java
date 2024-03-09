@@ -15,34 +15,24 @@ import lombok.EqualsAndHashCode;
 @Data
 public class UserQueryRequest extends PageRequest implements Serializable {
     /**
-     * id
+     * 姓名
      */
-    private Long id;
+    private String  name;
 
     /**
-     * 开放平台id
+     * 学号
      */
-    private String unionId;
+    private String userAccount;
 
     /**
-     * 公众号openId
+     * 学院
      */
-    private String mpOpenId;
+    private String academy;
 
     /**
-     * 用户昵称
+     * 班级
      */
-    private String userName;
-
-    /**
-     * 简介
-     */
-    private String userProfile;
-
-    /**
-     * 用户角色：user/admin/ban
-     */
-    private String userRole;
+    private String classes;
 
     private static final long serialVersionUID = 1L;
 }

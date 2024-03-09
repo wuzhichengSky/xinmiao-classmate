@@ -52,11 +52,14 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns("/user/identify")     //放行认证接口
                 .excludePathPatterns("/user/info/{id}")    //放行获取用户信息接口
                 .addPathPatterns("/post/*")           //拦截帖子所有
-                .excludePathPatterns("/post/list/page");   //放行帖子列表接口
+                .excludePathPatterns("/post/list/page")   //放行帖子列表接口
+                .addPathPatterns("/task_user/*")     ;      //拦截任务所有
 
-        //添加管理员拦截器
+        //添加管理员拦截器，拦截所有接口
         registry.addInterceptor(adminLoginInterceptor)
-                .addPathPatterns("/admin/*")            //拦截所有
-                .excludePathPatterns("/admin/login");   //放行登录接口
+                .addPathPatterns("/admin/*")
+                .excludePathPatterns("/admin/login")
+                .addPathPatterns("/task_admin/*")
+                .addPathPatterns("/student/*");
     }
 }

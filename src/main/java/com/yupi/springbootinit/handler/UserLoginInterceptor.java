@@ -3,11 +3,15 @@ package com.yupi.springbootinit.handler;
 
 import com.yupi.springbootinit.common.ErrorCode;
 import com.yupi.springbootinit.exception.BusinessException;
+import com.yupi.springbootinit.model.entity.User;
 import com.yupi.springbootinit.service.UserService;
+import com.yupi.springbootinit.utils.JwtUtil;
+import com.yupi.springbootinit.utils.UserThreadLocal;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -34,9 +38,32 @@ public class UserLoginInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        if (request.getSession().getAttribute(USER_LOGIN_STATE) == null) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "未登录");
+        // 如果不是映射到方法直接通过
+        if (!(handler instanceof HandlerMethod)){
+            return true;
         }
+
+        String token= request.getHeader("token");
+        // 执行认证
+        if (token == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+
+        // 验证 token
+        if (!JwtUtil.verify(token)) {
+            throw new BusinessException(ErrorCode.TOKEN_ERROR);
+        }
+
+        // 获取 token 中的 user id
+        Long userId = Long.valueOf(JwtUtil.getUserIdByToken(token));
+
+        //查询数据库，看看是否存在此用户
+        User user = userService.getById(userId);
+        if(user==null){
+            throw new BusinessException(ErrorCode.TOKEN_ERROR,"用户不存在");
+        }
+        //将获取到的user存入UserThreadLocal中备用
+        UserThreadLocal.put(user);
 
         return true;
     }
