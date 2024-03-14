@@ -52,6 +52,7 @@ import static com.yupi.springbootinit.utils.FileUtils.fileValid;
  */
 @RestController
 @RequestMapping("/user")
+@CrossOrigin
 @Slf4j
 public class UserController {
 
@@ -159,8 +160,7 @@ public class UserController {
         if (request == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        boolean result = userService.userLogout(request);
-        return ResultUtils.success(result);
+        return ResultUtils.success(true,"退出成功");
     }
 
     /**
@@ -229,8 +229,7 @@ public class UserController {
     @PutMapping("/info")
     public BaseResponse<Boolean> updateUser(String userName,MultipartFile userAvatar,String userProfile,
             HttpServletRequest request) {
-        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
-        User user = (User) userObj;
+        User user = UserThreadLocal.get();
 
         if(!StringUtils.isBlank(userName)){
             user.setUserName(userName);

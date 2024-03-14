@@ -10,10 +10,7 @@ import com.yupi.springbootinit.model.dto.user.UserLoginRequest;
 import com.yupi.springbootinit.model.vo.LoginUserVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -26,6 +23,7 @@ import static com.yupi.springbootinit.constant.UserConstant.*;
 
 @RestController
 @RequestMapping("/admin")
+@CrossOrigin
 @Slf4j
 public class AdminController {
     /**
@@ -63,10 +61,6 @@ public class AdminController {
     public BaseResponse<Boolean> userLogout(HttpServletRequest request) {
         if (request == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        //判断是否登录
-        if (request.getSession().getAttribute(ADMIN_LOGIN_STATE) == null) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "未登录");
         }
         // 移除登录态
         request.getSession().removeAttribute(ADMIN_LOGIN_STATE);

@@ -37,6 +37,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -228,11 +229,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public boolean userLogout(HttpServletRequest request) {
-        if (request.getSession().getAttribute(USER_LOGIN_STATE) == null) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "未登录");
-        }
         // 移除登录态
-        request.getSession().removeAttribute(USER_LOGIN_STATE);
         return true;
     }
 
@@ -250,7 +247,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public UserVO getUserVO(User user) {
         if (user == null) {
-            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户不存在");
         }
         UserVO userVO = new UserVO();
         BeanUtils.copyProperties(user, userVO);
@@ -449,6 +446,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String encryptPassword = DigestUtils.md5DigestAsHex((SALT + user.getUserAccount()).getBytes());
         user.setUserPassword(encryptPassword);
         return save(user);
+    }
+
+    @Override
+    public Boolean deleteStudentInBatches( Long[] idList) {
+        //校验id
+        if (idList == null || idList.length==0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "id列表为空，无法删除");
+        }
+        //判断用户是否存在
+        for (Long id : idList) {
+            if(getById(id) == null){
+                throw new BusinessException(ErrorCode.PARAMS_ERROR,"存在非法用户，无法删除");
+            }
+        }
+
+        if(!removeBatchByIds(Arrays.stream(idList).toList())){
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        }
+
+        return true;
+
     }
 
 

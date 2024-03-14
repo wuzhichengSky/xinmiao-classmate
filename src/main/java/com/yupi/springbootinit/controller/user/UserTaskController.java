@@ -29,6 +29,7 @@ import static com.yupi.springbootinit.constant.UserConstant.USER_LOGIN_STATE;
 
 @RestController
 @RequestMapping("/task_user")
+@CrossOrigin
 @Slf4j
 public class UserTaskController {
 

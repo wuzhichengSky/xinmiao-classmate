@@ -55,11 +55,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns("/post/list/page")   //放行帖子列表接口
                 .addPathPatterns("/task_user/*")     ;      //拦截任务所有
 
+        //TODO 拦截失效
         //添加管理员拦截器，拦截所有接口
         registry.addInterceptor(adminLoginInterceptor)
-                .addPathPatterns("/admin/*")
-                .excludePathPatterns("/admin/login")
-                .addPathPatterns("/task_admin/*")
-                .addPathPatterns("/student/*");
+                .addPathPatterns("/admin/*");
+                //.excludePathPatterns("/admin/login");
     }
 }

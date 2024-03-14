@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/post_favour")
+@CrossOrigin
 @Slf4j
 public class PostFavourController {
 

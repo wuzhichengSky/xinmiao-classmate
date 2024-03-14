@@ -31,6 +31,7 @@ import javax.servlet.http.HttpServletRequest;
  */
 @RestController
 @RequestMapping("/post_comment")
+@CrossOrigin
 @Slf4j
 public class PostCommentController {
 

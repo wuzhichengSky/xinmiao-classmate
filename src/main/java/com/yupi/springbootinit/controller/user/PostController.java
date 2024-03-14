@@ -37,6 +37,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/post")
+@CrossOrigin
 @Slf4j
 public class PostController {
 

@@ -20,7 +20,8 @@ import static com.yupi.springbootinit.constant.UserConstant.*;
  */
 
 @RestController
-@RequestMapping("/task_admin")
+@RequestMapping("/admin/task")
+@CrossOrigin
 @Slf4j
 public class AdminTaskController {
 
@@ -57,6 +58,9 @@ public class AdminTaskController {
      */
     @GetMapping("/total")
     public BaseResponse<Integer> getTotal(HttpServletRequest request) {
+        Object attribute = request.getSession().getAttribute(ADMIN_LOGIN_STATE);
+        System.out.println(attribute);
+
         Integer  result = taskService.getTotal();
         return ResultUtils.success(result,"查询成功");
     }
